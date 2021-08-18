@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>安物VTuber</title>
+</head>
+<body>
+  <div id="app">
+    <!-- キャラクタの表示 -->
+    <div class="character">
+      <img class="face" src="./image/face_normal.png">
+      <img class="mouse" id="mouse" src='./image/mouse_close.png' alt="">
+    </div>
+
+    <div class="control-panel">
+			<button id="start">START</button>
+      <button id="stop">STOP</button>
+      <br/>
+      <button id="reset">RESET</button>
+      <input type="range" id="threshold" min="100" max="5000" step="50" value="700">
+      <span id="current-threshold"></span>
+    </div>
+
+  </div>
+</body>
+</html>
+
+<style>
+  .character {
+    position: relative;
+  }
+  img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 400px;
+  }
+  img.mouse, img.face {
+    z-index: 1;
+  }
+  .control-panel {
+    position: relative;
+    z-index: 2;
+  }
+  input#threshold {
+    width: 240px;
+  }
+</style>
+
+<script>
+  let ctx = null // AudioContext: Nodeの作成、音声のデコードの制御などを行う
+  let audioSrc = null // AudioBufferSourceNode: 音声入力ノード
+  let analyser = null // AnalyserNode: 音声解析ノード
+  let sampleInterval = null
+  let prevSpec = 0 // 前回のサンプリングで取得したスペクトルの配列
+  let source = null
+  let stream = null
+  let threshold;
+
+  const mouseElement = document.getElementById('mouse')
+  const buttons = document.querySelectorAll('button')
+  const player = document.getElementById("player")
+  const startButton = document.getElementById("start");
+  const stopButton = document.getElementById("stop");
+  const resetButton = document.getElementById("reset");
+  const range = document.getElementById("threshold");
+  const currentThreshold = document.getElementById("current-threshold");
+  const imgPath = './image/';
+
+  threshold = range.value;
+  currentThreshold.innerText = threshold;
+  stopButton.disabled = true;
+
+
+  webAudioSetup = async () => {
+	// Web Audio APIの初期化
+	  ctx = new AudioContext();
+	  analyser = ctx.createAnalyser();
+	  analyser.fftSize = 512;
+	  analyser.connect(ctx.destination);
+    stream = await navigator.mediaDevices.getUserMedia({audio: true});
+    source = ctx.createMediaStreamSource(stream);
+    source.connect(analyser);
+  }
+
+  syncLip = (spectrums) => {
+    let imgName = 'mouse_close.png';
+    let totalSpec = 0
+    const totalSpectrum = spectrums.reduce(function(a, x) { return a + x })
+    console.log(totalSpectrum, prevSpec);
+    if (totalSpectrum - prevSpec > threshold) {
+      imgName = 'mouse_open.png';
+    } else if (prevSpec - totalSpectrum > threshold) {
+      imgName = 'mouse_open_light.png';
+    }
+    mouseElement.src = imgPath + imgName;
+    prevSpec = totalSpectrum
+  }
+
+  startButton.onclick = () => {
+    startButton.disabled = true
+    stopButton.disabled  = false
+    if(!ctx) {
+      webAudioSetup()
+    }
+
+    sampleInterval = setInterval(() => {
+      let spectrums = new Uint8Array(analyser.fftSize)
+      analyser.getByteFrequencyData(spectrums)
+      syncLip(spectrums)
+    }, 50)
+  }
+
+  stopButton.onclick = () => {
+    startButton.disabled = false
+    stopButton.disabled  = true
+    clearInterval(sampleInterval)
+    mouseElement.src = imgPath + 'mouse_close.png';
+  }
+
+  resetButton.onclick = () => {
+    threshold = 700;
+    range.value = threshold;
+    currentThreshold.innerText = threshold;
+  }
+
+  range.onchange = (e) => {
+    threshold = range.value;
+    currentThreshold.innerText = threshold;
+  }
+</script>
