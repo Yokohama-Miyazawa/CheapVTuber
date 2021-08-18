@@ -1,0 +1,20 @@
+.character {
+    position: relative;
+}
+img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 400px;
+}
+img.mouse, img.face {
+    z-index: 1;
+}
+.control-panel {
+    position: relative;
+    z-index: 2;
+}
+input#threshold {
+    width: 240px;
+}
+
