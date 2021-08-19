@@ -27,7 +27,7 @@ webAudioSetup = async () => {
   ctx = new AudioContext();
   analyser = ctx.createAnalyser();
   analyser.fftSize = 512;
-  analyser.connect(ctx.destination);
+  //analyser.connect(ctx.destination);
   stream = await navigator.mediaDevices.getUserMedia({audio: true});
   source = ctx.createMediaStreamSource(stream);
   source.connect(analyser);
