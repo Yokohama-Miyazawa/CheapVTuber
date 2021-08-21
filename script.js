@@ -21,6 +21,9 @@ threshold = range.value;
 currentThreshold.innerText = threshold;
 stopButton.disabled = true;
 
+if('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/CheapVTuber/sw.js');
+};
 
 webAudioSetup = async () => {
   // Web Audio APIの初期化
