@@ -18,7 +18,7 @@ const currentThreshold = document.getElementById("current-threshold");
 const imgPath = './image/';
 
 threshold = range.value;
-currentThreshold.innerText = threshold;
+currentThreshold.value = threshold;
 stopButton.disabled = true;
 
 if('serviceWorker' in navigator) {
@@ -73,10 +73,14 @@ stopButton.onclick = () => {
 resetButton.onclick = () => {
   threshold = 700;
   range.value = threshold;
-  currentThreshold.innerText = threshold;
+  currentThreshold.value = threshold;
 }
 
-range.onchange = (e) => {
+range.oninput = (e) => {
   threshold = range.value;
-  currentThreshold.innerText = threshold;
+  currentThreshold.value = threshold;
+}
+currentThreshold.onchange = (e) => {
+  range.value = currentThreshold.value;
+  range.oninput();
 }
