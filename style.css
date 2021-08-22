@@ -1,3 +1,9 @@
+body {
+   background-color: #EEEEEE;
+   background-size: cover;
+   background-attachment: fixed;
+   background-position: center center;
+}
 .character {
     position: relative;
 }
@@ -17,4 +23,3 @@ img.mouse, img.face {
 input#threshold {
     width: 240px;
 }
-
