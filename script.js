@@ -7,9 +7,9 @@ let source = null
 let stream = null
 let threshold;
 
-const mouseElement = document.getElementById('mouse')
-const buttons = document.querySelectorAll('button')
-const player = document.getElementById("player")
+const body = document.getElementById("body");
+const buckgroundUploader = document.getElementById('background');
+const mouseElement = document.getElementById('mouse');
 const startButton = document.getElementById("start");
 const stopButton = document.getElementById("stop");
 const resetButton = document.getElementById("reset");
@@ -83,4 +83,10 @@ range.oninput = (e) => {
 currentThreshold.onchange = (e) => {
   range.value = currentThreshold.value;
   range.oninput();
+}
+
+buckgroundUploader.onchange = (e) => {
+    const file = e.target.files[0];
+    const blobUrl = window.URL.createObjectURL(file);
+    body.style.backgroundImage = `url("${blobUrl}")`;
 }
