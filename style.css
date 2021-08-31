@@ -13,13 +13,23 @@ img {
     left: 0;
     width: 400px;
 }
-img.mouse, img.face {
+img.mouth, img.face {
     z-index: 1;
 }
 .control-panel {
     position: relative;
     z-index: 2;
 }
+div#threshold-control, div#character-image-control, div#background-image-control {
+    margin: 1em;
+    border: 1px solid #1F1F1F;
+    background-color: #EEEEEE;
+}
 input#threshold {
     width: 240px;
 }
+label.image-input-label {
+    width: 12em;
+    float: left;
+}
+

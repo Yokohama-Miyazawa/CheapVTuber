@@ -8,18 +8,27 @@ let stream = null
 let threshold;
 
 const body = document.getElementById("body");
-const buckgroundUploader = document.getElementById('background');
-const mouseElement = document.getElementById('mouse');
+const settingSwitch = document.getElementById("setting-switch");
+const controlPanel = document.getElementById("control-panel");
+const backgroundUploader = document.getElementById('background');
+const characterUploaders = document.querySelectorAll('.character-image-input');
+const setCharacter = document.getElementById("set-character");
+const faceElement = document.getElementById('face');
+const mouthElement = document.getElementById('mouth');
 const startButton = document.getElementById("start");
 const stopButton = document.getElementById("stop");
 const resetButton = document.getElementById("reset");
 const range = document.getElementById("threshold");
 const currentThreshold = document.getElementById("current-threshold");
 const imgPath = './image/';
+let mouthClose = imgPath + 'mouth_close.png';
+let mouthOpenLight = imgPath + 'mouth_open_light.png';
+let mouthOpen = imgPath + 'mouth_open.png';
 
 const dbName = 'settingDB';
 const dbVersion = '1';
-const storeName = 'background';
+const characterStore = 'character';
+const backgroundStore = 'background';
 let db;
 
 threshold = range.value;
@@ -36,24 +45,42 @@ openDB = () => {
   req.onsuccess = (evt) => {
     console.log("IndexedDB opened.");
     db = evt.currentTarget.result;
-    let trans = db.transaction(storeName, 'readonly');
-    let store = trans.objectStore(storeName);
-    let getReq = store.get(0);
+    let bgTrans = db.transaction(backgroundStore, 'readonly');
+    let bgStore = bgTrans.objectStore(backgroundStore);
+    let bgGetReq = bgStore.get(0);
 
-    getReq.onerror = (evt) => {
-      console.error("getReq:", evt.target.errorCode);
+    bgGetReq.onerror = (evt) => {
+      console.error("bgGetReq:", evt.target.errorCode);
     }
 
-    getReq.onsuccess = (evt) => {
+    bgGetReq.onsuccess = (evt) => {
       if (typeof evt.target.result != 'undefined') {
         let image = evt.target.result.img;
         let blobUrl = window.URL.createObjectURL(image);
         body.style.backgroundImage = `url("${blobUrl}")`;
-        console.log("image changed");
+        console.log("background image changed");
         body.onload = () => {
           window.URL.revokeObjectURL(blobUrl);
           console.log("blobURL revoked.");
         }
+      }
+    }
+
+    let charaTrans = db.transaction(characterStore, 'readonly');
+    let charaStore = charaTrans.objectStore(characterStore);
+    let charaGetReq = charaStore.get(0);
+
+    charaGetReq.onerror = (evt) => {
+      console.error("charaGetReq:", evt.target.errorCode);
+    }
+
+    charaGetReq.onsuccess = (evt) => {
+      if (typeof evt.target.result != 'undefined') {
+        faceElement.src = window.URL.createObjectURL(evt.target.result.face);
+        mouthClose = window.URL.createObjectURL(evt.target.result.mouthClose);
+        mouthOpenLight = window.URL.createObjectURL(evt.target.result.mouthOpenLight);
+        mouthOpen = window.URL.createObjectURL(evt.target.result.mouthOpen);
+        mouthElement.src = mouthClose;
       }
     }
   };
@@ -63,9 +90,15 @@ openDB = () => {
   };
 
   req.onupgradeneeded = (evt) => {
-    let objectStore = evt.currentTarget.result.createObjectStore(storeName, {keyPath : 'id'})
-    objectStore.createIndex("id", "id", { unique: true });
-    objectStore.createIndex("img", "img", { unique: false });
+    let backgroundObjectStore = evt.currentTarget.result.createObjectStore(backgroundStore, {keyPath : 'id'})
+    backgroundObjectStore.createIndex("id", "id", { unique: true });
+    backgroundObjectStore.createIndex("img", "img", { unique: false });
+    let characterObjectStore = evt.currentTarget.result.createObjectStore(characterStore, {keyPath: 'id'})
+    characterObjectStore.createIndex("id", "id", { unique: true });
+    characterObjectStore.createIndex("face", "face", { unique: false });
+    characterObjectStore.createIndex("mouthClose", "mouthClose", { unique: false });
+    characterObjectStore.createIndex("mouthOpenLight", "mouthOpenLight", { unique: false });
+    characterObjectStore.createIndex("mouthOpen", "mouthOpen", { unique: false });
     console.log("IndexedDB upgraded.");
   };
 }
@@ -83,16 +116,23 @@ webAudioSetup = async () => {
 }
 
 syncLip = (spectrums) => {
-  let imgName = 'mouse_close.png';
-  let totalSpec = 0
+  let imgSrc = mouthClose;
   const totalSpectrum = spectrums.reduce(function(a, x) { return a + x })
   if (totalSpectrum - prevSpec > threshold) {
-    imgName = 'mouse_open.png';
+    imgSrc = mouthOpen;
   } else if (prevSpec - totalSpectrum > threshold) {
-    imgName = 'mouse_open_light.png';
+    imgSrc = mouthOpenLight;
   }
-  mouseElement.src = imgPath + imgName;
+  mouthElement.src = imgSrc;
   prevSpec = totalSpectrum
+}
+
+settingSwitch.onclick = () => {
+  if(controlPanel.style.display == "block") {
+    controlPanel.style.display = "none";
+  } else {
+    controlPanel.style.display = "block";
+  }
 }
 
 startButton.onclick = () => {
@@ -113,7 +153,7 @@ stopButton.onclick = () => {
   startButton.disabled = false
   stopButton.disabled  = true
   clearInterval(sampleInterval)
-  mouseElement.src = imgPath + 'mouse_close.png';
+  mouthElement.src = mouthClose;
 }
 
 resetButton.onclick = () => {
@@ -131,11 +171,12 @@ currentThreshold.onchange = (e) => {
   range.oninput();
 }
 
-buckgroundUploader.onchange = (e) => {
+backgroundUploader.onchange = (e) => {
   let file = e.target.files[0];
+  console.log(file);
   let obj = {'id': 0, 'img': file};
-  let trans = db.transaction(storeName, 'readwrite');
-  let store = trans.objectStore(storeName);
+  let trans = db.transaction(backgroundStore, 'readwrite');
+  let store = trans.objectStore(backgroundStore);
   let req;
   try {
     req = store.put(obj);
@@ -158,4 +199,54 @@ buckgroundUploader.onchange = (e) => {
   }
 }
 
+setCharacter.onclick = () => {
+  let uploaders = Array.from(characterUploaders);
+  if(uploaders.some((t) => {return (t.value === 'undefined' || t.value === '')})){
+    alert("There are unset images.");
+    return;
+  }
+
+  let face, close, halfOpen, open;
+  characterUploaders.forEach((t) => {
+    switch(t.id) {
+      case 'input-face':
+        face = t.files[0];
+        break;
+      case 'input-mouth_close':
+        close = t.files[0];
+        break;
+      case 'input-mouth_open_light':
+        halfOpen = t.files[0];
+        break;
+      case 'input-mouth_open':
+        open = t.files[0];
+        break;
+    }
+  });
+
+  let obj = {'id': 0, 'face': face, 'mouthClose': close, 'mouthOpenLight': halfOpen, 'mouthOpen': open};
+  let trans = db.transaction(characterStore, 'readwrite');
+  let store = trans.objectStore(characterStore);
+  let req;
+  try {
+    req = store.put(obj);
+  } catch(e) {
+    throw e;
+  }
+
+  req.onsuccess = (evt) => {
+    faceElement.src = window.URL.createObjectURL(face);
+    mouthClose = window.URL.createObjectURL(close);
+    mouthOpenLight = window.URL.createObjectURL(halfOpen);
+    mouthOpen = window.URL.createObjectURL(open);
+    mouthElement.src = mouthClose;
+    console.log("character image changed");
+  }
+
+  req.onerror = () => {
+    console.error("characterUploader:", this.error);
+  }
+}
+
+controlPanel.style.display = "none";
 openDB()
