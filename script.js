@@ -17,6 +17,11 @@ const range = document.getElementById("threshold");
 const currentThreshold = document.getElementById("current-threshold");
 const imgPath = './image/';
 
+const dbName = 'settingDB';
+const dbVersion = '1';
+const storeName = 'background';
+let db;
+
 threshold = range.value;
 currentThreshold.value = threshold;
 stopButton.disabled = true;
@@ -24,6 +29,47 @@ stopButton.disabled = true;
 if('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/CheapVTuber/sw.js');
 };
+
+openDB = () => {
+  let req = indexedDB.open(dbName, dbVersion);
+
+  req.onsuccess = (evt) => {
+    console.log("IndexedDB opened.");
+    db = evt.currentTarget.result;
+    let trans = db.transaction(storeName, 'readonly');
+    let store = trans.objectStore(storeName);
+    let getReq = store.get(0);
+
+    getReq.onerror = (evt) => {
+      console.error("getReq:", evt.target.errorCode);
+    }
+
+    getReq.onsuccess = (evt) => {
+      if (typeof evt.target.result != 'undefined') {
+        let image = evt.target.result.img;
+        let blobUrl = window.URL.createObjectURL(image);
+        body.style.backgroundImage = `url("${blobUrl}")`;
+        console.log("image changed");
+        body.onload = () => {
+          window.URL.revokeObjectURL(blobUrl);
+          console.log("blobURL revoked.");
+        }
+      }
+    }
+  };
+
+  req.onerror = (evt) => {
+    console.error("openDB:", evt.target.errorCode);
+  };
+
+  req.onupgradeneeded = (evt) => {
+    let objectStore = evt.currentTarget.result.createObjectStore(storeName, {keyPath : 'id'})
+    objectStore.createIndex("id", "id", { unique: true });
+    objectStore.createIndex("img", "img", { unique: false });
+    console.log("IndexedDB upgraded.");
+  };
+}
+
 
 webAudioSetup = async () => {
   // Web Audio APIの初期化
@@ -86,7 +132,30 @@ currentThreshold.onchange = (e) => {
 }
 
 buckgroundUploader.onchange = (e) => {
-    const file = e.target.files[0];
-    const blobUrl = window.URL.createObjectURL(file);
+  let file = e.target.files[0];
+  let obj = {'id': 0, 'img': file};
+  let trans = db.transaction(storeName, 'readwrite');
+  let store = trans.objectStore(storeName);
+  let req;
+  try {
+    req = store.put(obj);
+  } catch(e) {
+    throw e;
+  }
+
+  req.onsuccess = (evt) => {
+    let blobUrl = window.URL.createObjectURL(file);
     body.style.backgroundImage = `url("${blobUrl}")`;
+    console.log("image changed");
+    body.onload = () => {
+      window.URL.revokeObjectURL(blobUrl);
+      console.log("blobURL revoked.");
+    }
+  }
+
+  req.onerror = () => {
+    console.error("backgroundUploader:", this.error);
+  }
 }
+
+openDB()
