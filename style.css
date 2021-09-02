@@ -9,10 +9,10 @@ body {
 }
 img {
     position: absolute;
-    width: 400px;
 }
 img.mouth, img.face {
     z-index: 1;
+    width: 400px;
 }
 .control-panel {
     position: relative;
