@@ -108,12 +108,15 @@ openDB = () => {
           switch(k) {
             case 'size':
               faceElement.style.width = mouthElement.style.width = `${value}px`;
+              characterSize.value = currentCharacterSize.value = value;
               break;
             case 'top':
               faceElement.style.top = mouthElement.style.top = `${value}px`;
+              vertical.value = currentVertical.value = value;
               break;
             case 'left':
               faceElement.style.left = mouthElement.style.left = `${value}px`;
+              crosswise.value = currentCrosswise.value = value;
               break;
           }
         }
