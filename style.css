@@ -9,8 +9,6 @@ body {
 }
 img {
     position: absolute;
-    top: 0;
-    left: 0;
     width: 400px;
 }
 img.mouth, img.face {
@@ -20,7 +18,10 @@ img.mouth, img.face {
     position: relative;
     z-index: 2;
 }
-div#threshold-control, div#character-image-control, div#background-image-control {
+div#threshold-control,
+div#character-image-control,
+div#background-image-control,
+div#character-position-control {
     margin: 1em;
     border: 1px solid #1F1F1F;
     background-color: #EEEEEE;

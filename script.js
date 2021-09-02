@@ -20,6 +20,11 @@ const stopButton = document.getElementById("stop");
 const resetButton = document.getElementById("reset");
 const range = document.getElementById("threshold");
 const currentThreshold = document.getElementById("current-threshold");
+const positionResetButton = document.getElementById("position-reset");
+const crosswise = document.getElementById("crosswise");
+const currentCrosswise = document.getElementById("current-crosswise");
+const vertical = document.getElementById("vertical");
+const currentVertical = document.getElementById("current-vertical");
 const imgPath = './image/';
 let mouthClose = imgPath + 'mouth_close.png';
 let mouthOpenLight = imgPath + 'mouth_open_light.png';
@@ -166,9 +171,41 @@ range.oninput = (e) => {
   threshold = range.value;
   currentThreshold.value = threshold;
 }
+
 currentThreshold.onchange = (e) => {
   range.value = currentThreshold.value;
   range.oninput();
+}
+
+positionResetButton.onclick = () => {
+  let left = 0;
+  let top = 0;
+  crosswise.value = left;
+  vertical.value = top;
+  crosswise.oninput();
+  vertical.oninput();
+}
+
+crosswise.oninput = (e) => {
+  let left = crosswise.value;
+  currentCrosswise.value = left;
+  faceElement.style.left = mouthElement.style.left = `${left}px`;
+}
+
+currentCrosswise.onchange = (e) => {
+  crosswise.value = currentCrosswise.value;
+  crosswise.oninput();
+}
+
+vertical.oninput = (e) => {
+  let top = vertical.value;
+  currentVertical.value = top;
+  faceElement.style.top = mouthElement.style.top = `${top}px`;
+}
+
+currentVertical.onchange = (e) => {
+  vertical.value = currentVertical.value;
+  vertical.oninput();
 }
 
 backgroundUploader.onchange = (e) => {
