@@ -21,6 +21,8 @@ const resetButton = document.getElementById("reset");
 const range = document.getElementById("threshold");
 const currentThreshold = document.getElementById("current-threshold");
 const positionResetButton = document.getElementById("position-reset");
+const characterSize = document.getElementById("size");
+const currentCharacterSize = document.getElementById("current-size");
 const crosswise = document.getElementById("crosswise");
 const currentCrosswise = document.getElementById("current-crosswise");
 const vertical = document.getElementById("vertical");
@@ -32,6 +34,7 @@ let mouthOpen = imgPath + 'mouth_open.png';
 
 const dbName = 'settingDB';
 const dbVersion = '1';
+const layoutStore = 'layout';
 const characterStore = 'character';
 const backgroundStore = 'background';
 let db;
@@ -88,6 +91,34 @@ openDB = () => {
         mouthElement.src = mouthClose;
       }
     }
+
+    let layTrans = db.transaction(layoutStore, 'readonly');
+    let layStore = layTrans.objectStore(layoutStore);
+    let layGetReq;
+    Array("size", "top", "left").forEach((k) => {
+      layGetReq = layStore.get(k);
+
+      layGetReq.onerror = (evt) => {
+        console.error("layGetReq:", evt.target.errorCode);
+      }
+
+      layGetReq.onsuccess = (evt) => {
+        if (typeof evt.target.result != 'undefined') {
+          let value = evt.target.result.value;
+          switch(k) {
+            case 'size':
+              faceElement.style.width = mouthElement.style.width = `${value}px`;
+              break;
+            case 'top':
+              faceElement.style.top = mouthElement.style.top = `${value}px`;
+              break;
+            case 'left':
+              faceElement.style.left = mouthElement.style.left = `${value}px`;
+              break;
+          }
+        }
+      }
+    });
   };
 
   req.onerror = (evt) => {
@@ -104,6 +135,9 @@ openDB = () => {
     characterObjectStore.createIndex("mouthClose", "mouthClose", { unique: false });
     characterObjectStore.createIndex("mouthOpenLight", "mouthOpenLight", { unique: false });
     characterObjectStore.createIndex("mouthOpen", "mouthOpen", { unique: false });
+    let layoutObjectStore = evt.currentTarget.result.createObjectStore(layoutStore, {keyPath: 'kind'})
+    layoutObjectStore.createIndex("kind", "kind", { unique: true });
+    layoutObjectStore.createIndex("value", "value", { unique: false });
     console.log("IndexedDB upgraded.");
   };
 }
@@ -177,19 +211,47 @@ currentThreshold.onchange = (e) => {
   range.oninput();
 }
 
+setLayoutDB = (kind, value) => {
+  let obj = {'kind': kind, 'value': value};
+  let trans = db.transaction(layoutStore, 'readwrite');
+  let store = trans.objectStore(layoutStore);
+  let req;
+  try {
+    req = store.put(obj);
+  } catch(e) {
+    throw e;
+  }
+}
+
 positionResetButton.onclick = () => {
+  let size = 400;
   let left = 0;
   let top = 0;
+  characterSize.value = size;
   crosswise.value = left;
   vertical.value = top;
+  characterSize.oninput();
   crosswise.oninput();
   vertical.oninput();
+}
+
+characterSize.oninput = (e) => {
+  let size = characterSize.value;
+  currentCharacterSize.value = size;
+  faceElement.style.width = mouthElement.style.width = `${size}px`;
+  setLayoutDB('size', size);
+}
+
+currentCharacterSize.onchange = (e) => {
+  characterSize.value = currentCharacterSize.value;
+  characterSize.oninput();
 }
 
 crosswise.oninput = (e) => {
   let left = crosswise.value;
   currentCrosswise.value = left;
   faceElement.style.left = mouthElement.style.left = `${left}px`;
+  setLayoutDB('left', left);
 }
 
 currentCrosswise.onchange = (e) => {
@@ -201,6 +263,7 @@ vertical.oninput = (e) => {
   let top = vertical.value;
   currentVertical.value = top;
   faceElement.style.top = mouthElement.style.top = `${top}px`;
+  setLayoutDB('top', top);
 }
 
 currentVertical.onchange = (e) => {
