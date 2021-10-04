@@ -5,6 +5,7 @@ let sampleInterval = null
 let prevSpec = 0
 let source = null
 let stream = null
+let audioTrack = null
 let threshold;
 
 const body = document.getElementById("body");
@@ -153,6 +154,7 @@ webAudioSetup = async () => {
   analyser.fftSize = 512;
   //analyser.connect(ctx.destination);
   stream = await navigator.mediaDevices.getUserMedia({audio: true});
+  audioTrack = stream.getAudioTracks()[0];
   source = ctx.createMediaStreamSource(stream);
   source.connect(analyser);
 }
@@ -182,6 +184,8 @@ startButton.onclick = () => {
   stopButton.disabled  = false
   if(!ctx) {
     webAudioSetup()
+  } else {
+    audioTrack.enabled = true
   }
 
   sampleInterval = setInterval(() => {
@@ -194,6 +198,7 @@ startButton.onclick = () => {
 stopButton.onclick = () => {
   startButton.disabled = false
   stopButton.disabled  = true
+  audioTrack.enabled = false
   clearInterval(sampleInterval)
   mouthElement.src = mouthClose;
 }
