@@ -16,8 +16,7 @@ const characterUploaders = document.querySelectorAll('.character-image-input');
 const setCharacter = document.getElementById("set-character");
 const faceElement = document.getElementById('face');
 const mouthElement = document.getElementById('mouth');
-const startButton = document.getElementById("start");
-const stopButton = document.getElementById("stop");
+const muteButton = document.getElementById("mute");
 const resetButton = document.getElementById("reset");
 const range = document.getElementById("threshold");
 const currentThreshold = document.getElementById("current-threshold");
@@ -42,9 +41,9 @@ let db;
 
 threshold = range.value;
 currentThreshold.value = threshold;
-stopButton.disabled = true;
 
-if('serviceWorker' in navigator) {
+
+if('serviceWorker' in navigator && window.location.hostname != "localhost") {
     navigator.serviceWorker.register('/CheapVTuber/sw.js');
 };
 
@@ -157,6 +156,12 @@ webAudioSetup = async () => {
   audioTrack = stream.getAudioTracks()[0];
   source = ctx.createMediaStreamSource(stream);
   source.connect(analyser);
+
+  sampleInterval = setInterval(() => {
+    let spectrums = new Uint8Array(analyser.fftSize)
+    analyser.getByteFrequencyData(spectrums)
+    syncLip(spectrums)
+  }, 50)
 }
 
 syncLip = (spectrums) => {
@@ -179,28 +184,19 @@ settingSwitch.onclick = () => {
   }
 }
 
-startButton.onclick = () => {
-  startButton.disabled = true
-  stopButton.disabled  = false
-  if(!ctx) {
-    webAudioSetup()
+muteButton.onclick = () => {
+  if (muteButton.innerText == "UNMUTE") {  // become unmute
+    if(!ctx) {
+      webAudioSetup()
+    } else {
+      audioTrack.enabled = true;
+    }
+    muteButton.innerText = "MUTE";
   } else {
-    audioTrack.enabled = true
+    audioTrack.enabled = false;
+    mouthElement.src = mouthClose;
+    muteButton.innerText = "UNMUTE";
   }
-
-  sampleInterval = setInterval(() => {
-    let spectrums = new Uint8Array(analyser.fftSize)
-    analyser.getByteFrequencyData(spectrums)
-    syncLip(spectrums)
-  }, 50)
-}
-
-stopButton.onclick = () => {
-  startButton.disabled = false
-  stopButton.disabled  = true
-  audioTrack.enabled = false
-  clearInterval(sampleInterval)
-  mouthElement.src = mouthClose;
 }
 
 resetButton.onclick = () => {
