@@ -2,7 +2,6 @@ let ctx = null
 let audioSrc = null
 let analyser = null
 let sampleInterval = null
-let prevSpec = 0
 let source = null
 let stream = null
 let audioTrack = null
@@ -150,7 +149,7 @@ webAudioSetup = async () => {
   // Web Audio APIの初期化
   ctx = new AudioContext();
   analyser = ctx.createAnalyser();
-  analyser.fftSize = 512;
+  analyser.fftSize = 2048;
   //analyser.connect(ctx.destination);
   stream = await navigator.mediaDevices.getUserMedia({audio: true});
   audioTrack = stream.getAudioTracks()[0];
@@ -161,19 +160,20 @@ webAudioSetup = async () => {
     let spectrums = new Uint8Array(analyser.fftSize)
     analyser.getByteFrequencyData(spectrums)
     syncLip(spectrums)
-  }, 50)
+  }, 100)
 }
 
 syncLip = (spectrums) => {
-  let imgSrc = mouthClose;
-  const totalSpectrum = spectrums.reduce(function(a, x) { return a + x })
-  if (totalSpectrum - prevSpec > threshold) {
-    imgSrc = mouthOpen;
-  } else if (prevSpec - totalSpectrum > threshold) {
-    imgSrc = mouthOpenLight;
+  let imgSrc;
+  // 人間の声の周波数帯のみ集める
+  let totalSpectrum = spectrums.slice(4, 51).reduce(function(a, x) { return a + x })
+  let array = [mouthOpen, mouthOpenLight, mouthClose];
+  if (totalSpectrum > threshold) {
+    imgSrc = array[Math.floor(Math.random() * array.length)];
+  } else {
+    imgSrc = mouthClose;
   }
   mouthElement.src = imgSrc;
-  prevSpec = totalSpectrum
 }
 
 settingSwitch.onclick = () => {
