@@ -26,6 +26,7 @@ const crosswise = document.getElementById("crosswise");
 const currentCrosswise = document.getElementById("current-crosswise");
 const vertical = document.getElementById("vertical");
 const currentVertical = document.getElementById("current-vertical");
+const currentMicInput = document.getElementById("currentMicInput");
 const imgPath = './image/';
 let mouthClose = imgPath + 'mouth_close.png';
 let mouthOpenLight = imgPath + 'mouth_open_light.png';
@@ -167,6 +168,7 @@ syncLip = (spectrums) => {
   let imgSrc;
   // 人間の声の周波数帯のみ集める
   let totalSpectrum = spectrums.slice(4, 51).reduce(function(a, x) { return a + x })
+  currentMicInput.innerText = `${totalSpectrum}`;
   let array = [mouthOpen, mouthOpenLight, mouthClose];
   if (totalSpectrum > threshold) {
     imgSrc = array[Math.floor(Math.random() * array.length)];
