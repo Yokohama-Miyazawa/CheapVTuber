@@ -5,6 +5,7 @@ let sampleInterval = null
 let source = null
 let stream = null
 let audioTrack = null
+let prevSpec = 0
 let threshold;
 
 const body = document.getElementById("body");
@@ -169,13 +170,14 @@ syncLip = (spectrums) => {
   // 人間の声の周波数帯のみ集める
   let totalSpectrum = spectrums.slice(4, 51).reduce(function(a, x) { return a + x })
   currentMicInput.innerText = `${totalSpectrum}`;
-  let array = [mouthOpen, mouthOpenLight, mouthClose];
-  if (totalSpectrum > threshold) {
+  if ((totalSpectrum >= threshold) && (totalSpectrum > prevSpec)) {
+    let array = [mouthOpen, mouthOpenLight];
     imgSrc = array[Math.floor(Math.random() * array.length)];
   } else {
     imgSrc = mouthClose;
   }
   mouthElement.src = imgSrc;
+  prevSpec = totalSpectrum;
 }
 
 settingSwitch.onclick = () => {
